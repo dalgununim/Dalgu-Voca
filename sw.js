@@ -1,5 +1,5 @@
-const CACHE_NAME='dalgu-voca-pwa-v9-one-line-title-three-paws';
-const CORE=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png'];
+const CACHE_NAME='dalgu-voca-v11-five-crayon-headers';
+const CORE=['./','./index.html','./crayon-home.png','./crayon-words.png','./crayon-add.png','./crayon-review.png','./crayon-more.png','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(CORE)).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',event=>{event.waitUntil(Promise.all([caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE_NAME).map(key=>caches.delete(key)))),self.clients.claim()]));});
 self.addEventListener('fetch',event=>{const req=event.request;if(req.method!=='GET'||new URL(req.url).origin!==self.location.origin)return;
