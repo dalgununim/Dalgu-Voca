@@ -360,10 +360,17 @@ function syncExamplePairs(){
  $('example').value=ens.join('\\n');$('translation').value=kos.join('\\n');
 }
 function addExamplePair(){
- syncExamplePairs();
- $('example').value+=($('example').value?'\\n':'')+' ';
- $('translation').value+=($('translation').value?'\\n':'')+' ';
- refreshExamplePreview();
+ // Append an editable empty row directly: examplePairs() discards blank strings.
+ const target=$('examplePairPreview');
+ if(!target)return;
+ const count=target.querySelectorAll('.example-pair').length;
+ const row=document.createElement('div');
+ row.className='example-pair';
+ row.innerHTML=`<div class="example-pair-number">예문 ${count+1}</div><label class="example-field-label">영어 예문</label><textarea class="pair-edit-en" data-pair-index="${count}" oninput="syncExamplePairs()" placeholder="영어 예문을 입력하세요"></textarea><label class="example-field-label">한국어 해석</label><textarea class="pair-edit-ko" data-pair-index="${count}" oninput="syncExamplePairs()" placeholder="한국어 해석을 입력하세요"></textarea><button type="button" class="pair-remove" onclick="removeExamplePair(${count})">이 예문 삭제</button>`;
+ const addButton=target.querySelector('.pair-add');
+ if(addButton)target.insertBefore(row,addButton);
+ else target.appendChild(row);
+ row.querySelector('.pair-edit-en').focus();
 }
 function removeExamplePair(i){
  const ens=Array.from(document.querySelectorAll('#examplePairPreview .pair-edit-en')).map(x=>x.value);
