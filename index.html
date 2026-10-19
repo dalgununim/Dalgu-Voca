@@ -342,9 +342,11 @@ function drawList(){
 function form(){let w=words.find(w=>w.id===editId)||{};return `<section class="card"><h2>${w.id?'✏️ 단어 수정':'✏️ 새 단어 등록'}</h2><form id="wordForm" onsubmit="submitWord(event)"><label class="label" for="term">영어 단어·숙어·구문 *</label><input id="term" required maxlength="250" value="${esc(w.term||'')}" placeholder="예: take into account"><label class="label" for="kind">종류</label><select id="kind"><option ${w.kind==='단어'?'selected':''}>단어</option><option ${w.kind==='숙어'?'selected':''}>숙어</option><option ${w.kind==='구문'?'selected':''}>구문</option></select><label class="label" for="meaning">뜻 *</label><textarea id="meaning" required placeholder="뜻을 적어주세요">${esc(w.meaning||'')}</textarea><label class="label" for="pron">발음·품사 (선택)</label><input id="pron" value="${esc(w.pron||'')}" placeholder="예: /rɪˈzɪliənt/, adjective"><label class="label" for="example" class="legacy-example-label" style="display:none">영어 예문 (선택)</label><textarea id="example" style="display:none" oninput="refreshExamplePreview()" placeholder="예문을 직접 적어주세요">${esc(w.example||'')}</textarea><div class="actions"><button type="button" class="btn light" onclick="requestChatGPT()">💬 ChatGPT에서 예문 선택하기 ❯</button></div><div id="chatgptPanel" hidden><p id="chatgptHelp" class="muted">ChatGPT에서 예문 3개를 받은 뒤 답변을 복사해 아래에 붙여넣어 주세요.</p><label class="label" for="chatgptPaste">ChatGPT 예문 답변 붙여넣기</label><textarea id="chatgptPaste" placeholder="1. I like reading books. || 나는 책 읽는 것을 좋아해요.&#10;2. ... || ..."></textarea><button type="button" class="btn light" style="width:100%;margin-top:8px" onclick="parseChatGPTExamples()">💗 붙여넣은 예문에서 여러 개 선택하기</button><div id="chatgptResults" class="muted" aria-live="polite"></div></div><label class="label" for="translation" style="display:none">예문 해석 (선택)</label><textarea id="translation" style="display:none" oninput="refreshExamplePreview()" placeholder="예문의 한국어 해석">${esc(w.translation||'')}</textarea><div class="example-preview-heading">💗 예문</div><div id="examplePairPreview" class="example-pair-preview"></div><label class="star-check"><input id="favorite" type="checkbox" ${w.favorite?'checked':''}><span>⭐ 중요 표현 — 더 외우고 싶어요</span></label><label class="label" for="tags">태그 (선택)</label><input id="tags" value="${esc(w.tags||'')}" placeholder="예: 비즈니스, 회화"><label class="label" for="memo">메모 (선택)</label><textarea id="memo">${esc(w.memo||'')}</textarea><div class="notice">💬 ChatGPT에 예문을 요청한 뒤 답변을 붙여넣고 마음에 드는 문장을 선택하세요. 서버 설정이나 API 키는 필요하지 않아요.</div><div class="actions"><button type="submit" class="btn primary">💗 저장</button>${w.id?`<button type="button" class="btn light" onclick="removeWord('${w.id}')">삭제</button>`:''}</div></form></section><section class="card"><img class="ramen-dalgu" src="${RAMEN_DALGU}" alt="라면을 먹는 달구 그림"><p class="muted dalgu-two-sentences" style="text-align:center"><span>오늘 배운 표현을 기억해요!</span><span>잊기 전에 적어보세요!</span></p></section>`}
 
 function examplePairs(english,korean){
- const ens=String(english||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
- const kos=String(korean||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
- return Array.from({length:Math.max(ens.length,kos.length)},(_,i)=>({en:ens[i]||'',ko:kos[i]||''}));
+ // Also repair literal backslash-n separators written by older versions.
+ const lines=value=>String(value||'').replace(/\\r\\n/g,'\n').replace(/\\n/g,'\n').split(/\r?\n/).map(x=>x.trim());
+ const ens=lines(english),kos=lines(korean);
+ const pairs=Array.from({length:Math.max(ens.length,kos.length)},(_,i)=>({en:ens[i]||'',ko:kos[i]||''}));
+ return pairs.filter(p=>p.en||p.ko);
 }
 function pairedExampleHTML(english,korean){
  return examplePairs(english,korean).map((p,i)=>`<div class="example-pair"><div class="example-pair-number">예문 ${i+1}</div>${p.en?`<div class="example-pair-en">${esc(p.en)}</div>`:''}${p.ko?`<div class="example-pair-ko">${esc(p.ko)}</div>`:''}</div>`).join('');
@@ -357,7 +359,7 @@ function refreshExamplePreview(){
 function syncExamplePairs(){
  const ens=Array.from(document.querySelectorAll('#examplePairPreview .pair-edit-en')).map(x=>x.value);
  const kos=Array.from(document.querySelectorAll('#examplePairPreview .pair-edit-ko')).map(x=>x.value);
- $('example').value=ens.join('\\n');$('translation').value=kos.join('\\n');
+ $('example').value=ens.join('\n');$('translation').value=kos.join('\n');
 }
 function addExamplePair(){
  // Append an editable empty row directly: examplePairs() discards blank strings.
@@ -376,7 +378,7 @@ function removeExamplePair(i){
  const ens=Array.from(document.querySelectorAll('#examplePairPreview .pair-edit-en')).map(x=>x.value);
  const kos=Array.from(document.querySelectorAll('#examplePairPreview .pair-edit-ko')).map(x=>x.value);
  ens.splice(i,1);kos.splice(i,1);
- $('example').value=ens.join('\\n');$('translation').value=kos.join('\\n');
+ $('example').value=ens.join('\n');$('translation').value=kos.join('\n');
  refreshExamplePreview();
 }
 
