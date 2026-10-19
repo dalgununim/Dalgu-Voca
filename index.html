@@ -343,7 +343,7 @@ function form(){let w=words.find(w=>w.id===editId)||{};return `<section class="c
 
 function examplePairs(english,korean){
  // Also repair literal backslash-n separators written by older versions.
- const lines=value=>String(value||'').replace(/\\r\\n/g,'\n').replace(/\\n/g,'\n').split(/\r?\n/).map(x=>x.trim());
+ const lines=value=>String(value||'').replace(/\\+r\\+n|\\+n/g,'\n').split(/\r?\n/).map(x=>x.trim());
  const ens=lines(english),kos=lines(korean);
  const pairs=Array.from({length:Math.max(ens.length,kos.length)},(_,i)=>({en:ens[i]||'',ko:kos[i]||''}));
  return pairs.filter(p=>p.en||p.ko);
